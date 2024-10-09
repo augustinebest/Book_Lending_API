@@ -17,20 +17,25 @@ class AuthenticationController < ApplicationController
   end
 
   def login
-    user = User.find_by(email: params[:email])
+    begin
+      user = User.find_by(email: params[:email])
 
-    puts "This is a User: #{user.inspect}"
+      puts "This is a User: #{user.inspect}"
 
-    if user.nil?
-      render json: { error: "User not found" }, status: :not_found
-      return
-    end
+      if user.nil?
+        render json: { error: "User not found" }, status: :not_found
+        return
+      end
 
-    if user&.authenticate(params[:password])
-      token = encode_token({ user_id: user.id })
-      render json: { token: token, message: "Login Successfully!" }, status: :ok
-    else
-      render json: { error: "Invalid credentials!" }, status: :unauthorized
+      if user&.authenticate(params[:password])
+        token = encode_token({ user_id: user.id })
+        render json: { token: token, message: "Login Successfully!" }, status: :ok
+      else
+        render json: { error: "Invalid credentials!" }, status: :unauthorized
+      end
+    rescue StandardError => e
+      Rails.logger.error "An error occurred during login: #{e.message}"
+      render_error("An unexpected error occurred. Please try again later.", :internal_server_error)
     end
   end
 
@@ -47,5 +52,9 @@ class AuthenticationController < ApplicationController
     puts "ParameterMissing Error: #{e.message}"
     nil
     puts "User***555"
+  end
+
+  def render_error(message, status)
+    render json: { error: message }, status: status
   end
 end
