@@ -1,4 +1,6 @@
 class BooksController < ApplicationController
+  before_action :authorize_request, only: [:index, :create, :show, :update, :destroy]
+
   def index
     books = Book.all
     render json: { data: books }
